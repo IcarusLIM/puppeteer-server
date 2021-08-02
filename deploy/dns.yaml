@@ -1,0 +1,7 @@
+apiVersion: paas.sogou.com/v1
+kind: DNS
+metadata:
+  name: puppeteer-server
+  namespace: search-databus
+spec:
+  recordName: "puppeteer.databus.thanos"

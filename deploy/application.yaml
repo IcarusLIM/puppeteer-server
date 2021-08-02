@@ -1,0 +1,14 @@
+apiVersion: paas.sogou.com/v1
+kind: Application
+metadata:
+  name: puppeteer-server
+  namespace: search-databus
+  labels:
+    paas.sogou.com/app: puppeteer-server
+spec:
+  selector:
+    paas.sogou.com/app: puppeteer-server
+  directory: /xianzhi/sougou/sougoushiyebu/sousuoshiyebu/xitongjiagoubu/zhuaqufuwu/databus/puppeteer-server
+  displayName: Puppeteer Server
+  description: "Test Create Application use API"
+  creator: "guangwei@sogou-inc.com"

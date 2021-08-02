@@ -1,0 +1,15 @@
+apiVersion: paas.sogou.com/v1
+kind: NginxVhost
+metadata:
+  name: puppeteer-server
+  namespace: search-databus
+  labels:
+    paas.sogou.com/app: puppeteer-server
+spec:
+  domain: puppeteer.databus.thanos.sogou
+  path: /
+  attributes:
+    - key: "proxy_connect_timeout"
+      value: "5s"
+    - key: "proxy_read_timeout"
+      value: "60s"

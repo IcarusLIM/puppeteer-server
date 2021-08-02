@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: puppeteer-server
+  namespace: search-databus
+  labels:
+    paas.sogou.com/app: puppeteer-server
+spec:
+  replicas: 1
+  revisionHistoryLimit: 25
+  selector:
+    matchLabels:
+      paas.sogou.com/app: puppeteer-server
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        paas.sogou.com/app: puppeteer-server
+    spec:
+      containers:
+        - image: docker-reg.sogou-inc.com/databus/puppeteer-server:6f105e5
+          imagePullPolicy: IfNotPresent
+          name: puppeteer-server
+          ports:
+            - containerPort: 8081
+              name: http-port
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2048Mi
+            requests:
+              cpu: "2"
+              memory: 2048Mi
+      dnsPolicy: Default
+      readinessGates:
+        - conditionType: paas.sogou.com/registration
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
