@@ -5,7 +5,13 @@ exports.login = (cmd) => {
     function getAuth(headers) {
         return headers["authorization"] || headers["Authorization"]
     }
-    const { userName, password, userNameInput, passwordInput, loginBtn, successUrlPerfix, statusCode = 200, opDelay = 1000 } = cmd
+    const { userNameInput, passwordInput, loginBtn, successUrlPerfix, statusCode = 200, opDelay = 1000 } = cmd
+
+    let { userName, password, users } = cmd
+    if (!(userName && password)) {
+        const user = users[Math.floor(users.length * Math.random())];
+        [userName, password] = user.split("\t")
+    }
 
     return async (url, page, params) => {
         const { addHeader, setCookie } = params
