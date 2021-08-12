@@ -5,7 +5,7 @@ exports.login = (cmd) => {
     function getAuth(headers) {
         return headers["authorization"] || headers["Authorization"]
     }
-    const { userNameInput, passwordInput, loginBtn, successUrlPerfix, statusCode = 200, opDelay = 1000 } = cmd
+    const { loginUrl, userNameInput, passwordInput, loginBtn, successUrlPerfix, statusCode = 200, opDelay = 1000 } = cmd
 
     let { userName, password, users } = cmd
     if (!(userName && password)) {
@@ -19,7 +19,7 @@ exports.login = (cmd) => {
         const reqsDataRaw = await utils.setupLoggingOfAllNetworkData(page, cdpSession)
 
         // goto login page
-        await page.goto(url)
+        await page.goto(loginUrl || url)
 
         // set username and password
         await page.evaluate(async (userName, password, userNameInput, passwordInput, opDelay) => {
