@@ -19,7 +19,8 @@ exports.login = (cmd) => {
         const reqsDataRaw = await utils.setupLoggingOfAllNetworkData(page, cdpSession)
 
         // goto login page
-        await page.goto(loginUrl || url)
+        url = loginUrl || url
+        await page.goto(url)
 
         // set username and password
         await page.evaluate(async (userName, password, userNameInput, passwordInput, opDelay) => {
@@ -51,7 +52,6 @@ exports.login = (cmd) => {
         // check authorization
         if (!authorization) {
             const requestId = successResp.request()._requestId
-            console.log(requestId)
             const reqRaw = reqsDataRaw[requestId] || {}
             const requestWillBeSent = utils.pathCheck(reqRaw, ["Network.requestWillBeSent", "request", "headers"])
             const authorization1 = requestWillBeSent && getAuth(requestWillBeSent)
