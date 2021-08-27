@@ -4,6 +4,7 @@ const utils = require('./utils')
 const AsyncFunction = Object.getPrototypeOf(async function () { }).constructor
 
 const { login } = require('./cmd/login')
+const { cookie: getCookie } = require('./cmd/cookie')
 
 const getRender = async () => {
     const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam({}, true)))
@@ -95,6 +96,12 @@ exports.getHandler = async () => {
                 case "login":
                     injectFunc = login(cmd)
                     break
+                case "cookie":
+                    let extraFunc = null
+                    if (script) {
+                        extraFunc = new AsyncFunction("url", "page", script)
+                    }
+                    injectFunc = getCookie(extraFunc, cmd)
             }
         } else {
             injectFunc = new AsyncFunction("url", "page", "params", "const {addHeader, setCookie} = params;" + script)
