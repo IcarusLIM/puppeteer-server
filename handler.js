@@ -28,12 +28,12 @@ const getRender = async () => {
             res.headers[key] = value
         }
 
-        function setCookie(cookieStr) {
-            if (typeof (cookieStr) === "string") {
-                res.cookies = Object.fromEntries(cookieStr.split(";").map(i => i.split("=")))
+        function setCookie(cookie) {
+            if (typeof (cookie) === "string") {
+                res.cookie = cookie
             } else {
-                // cookieStr is kv
-                res.cookies = cookieStr
+                res.cookie_kv = cookie
+                res.cookie = cookie.map(i => i.name + "=" + i.value).join(";")
             }
         }
 

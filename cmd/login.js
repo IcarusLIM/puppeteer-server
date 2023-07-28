@@ -7,10 +7,13 @@ exports.login = (cmd) => {
     }
     const { loginUrl, userNameInput, passwordInput, loginBtn, successUrlPerfix, statusCode = 200, opDelay = 1000 } = cmd
 
-    let { userName, password, users } = cmd
+    let { userName, password, users, checkboxs } = cmd
     if (!(userName && password)) {
         const user = users[Math.floor(users.length * Math.random())];
         [userName, password] = user.split("\t")
+    }
+    if (!checkboxs) {
+        checkboxs = []
     }
 
     return async (url, page, params) => {
@@ -25,7 +28,6 @@ exports.login = (cmd) => {
         // set username and password
         await page.evaluate(async (userName, password, userNameInput, passwordInput, opDelay) => {
             const sleep = t => new Promise((r) => setTimeout(r, t))
-
             const elemUN = document.querySelector(userNameInput)
             elemUN.value = userName
             elemUN.dispatchEvent(new Event("input"))
@@ -43,9 +45,19 @@ exports.login = (cmd) => {
             const req = resp.request()
             return decodeURI(req.url()).startsWith(successUrlPerfix) && resp.status() === 200
         }, 10000)
-        await page.click(loginBtn)
-        const successResp = await waitPromise
 
+        for (const checkbox of checkboxs) {
+            await page.click(checkbox)
+            await utils.sleep(opDelay)
+        }
+
+        console.log(1, await page.evaluate(async () => { return document.cookie }))
+        await Promise.all([
+            page.click(loginBtn),
+            page.waitForNavigation()
+        ])
+
+        const successResp = await waitPromise
         const headers = successResp.request().headers()
 
         let authorization = getAuth(headers)
@@ -63,9 +75,10 @@ exports.login = (cmd) => {
             addHeader("authorization", authorization)
         }
 
+        console.log(4, await page.evaluate(async () => { return document.cookie }))
         const msg = await cdpSession.send("Network.getCookies", { urls: [url] })
-        setCookie(msg.cookies.map(i => i.name + "=" + i.value).join(";"))
+        setCookie(msg.cookies)
+        setCookie(await page.evaluate(async () => { return document.cookie }))
         await cdpSession.detach()
-        return { __cookieOrigin: msg.cookies }
     }
 }

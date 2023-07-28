@@ -16,9 +16,9 @@ exports.getLaunchParam = (originParam, enableCache = false, cacheDirPostfix = ""
             originParam = Object.assign({ userDataDir: '/tmp/puppeteer-cache' + cacheDirPostfix }, originParam)
         }
     } else {
-        originParam = Object.assign({ executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', headless: false }, originParam)
+        originParam = Object.assign({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: false }, originParam)
         if (enableCache) {
-            originParam = Object.assign({ userDataDir: 'D:\\code\\puppeteer-demo\\puppeteer-cache' + cacheDirPostfix }, originParam)
+            originParam = Object.assign({ userDataDir: './puppeteer-cache' + cacheDirPostfix }, originParam)
         }
     }
     return originParam
