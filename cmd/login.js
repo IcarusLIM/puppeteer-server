@@ -51,7 +51,6 @@ exports.login = (cmd) => {
             await utils.sleep(opDelay)
         }
 
-        console.log(1, await page.evaluate(async () => { return document.cookie }))
         await Promise.all([
             page.click(loginBtn),
             page.waitForNavigation()
@@ -75,7 +74,6 @@ exports.login = (cmd) => {
             addHeader("authorization", authorization)
         }
 
-        console.log(4, await page.evaluate(async () => { return document.cookie }))
         const msg = await cdpSession.send("Network.getCookies", { urls: [url] })
         setCookie(msg.cookies)
         setCookie(await page.evaluate(async () => { return document.cookie }))
