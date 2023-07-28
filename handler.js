@@ -7,7 +7,7 @@ const { login } = require('./cmd/login')
 const { cookie: getCookie } = require('./cmd/cookie')
 
 const getRender = async () => {
-    const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam({}, true)))
+    const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam()))
     return async (url, injectFunc, userAgent) => {
         const ctx = await browser.createIncognitoBrowserContext()
         const page = await ctx.newPage()
@@ -48,7 +48,7 @@ const getRender = async () => {
 }
 
 const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
-    const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam({ args: [`--proxy-server=${proxy}`] })))
+    const browser = await puppeteer.launch(utils.getLaunchParam(true))
     const page = await browser.newPage()
     await page.evaluateOnNewDocument(async () => {
         const newProto = navigator.__proto__;

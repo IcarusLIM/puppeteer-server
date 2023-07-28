@@ -1,27 +1,36 @@
+const os = require('os')
+
 exports.sleep = timeout => {
     return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
-exports.getLaunchParam = (originParam, enableCache = false, cacheDirPostfix = "") => {
-    if (!originParam.args) {
-        originParam.args = []
+exports.getLaunchParam = (enableProxy = false) => {
+    const params = { args: [] }
+
+    if (enableProxy && process.env.PROXY_SERVER) {
+        params.args.push("--proxy-server=" + process.env.PROXY_SERVER)
     }
-    if (process.env.PROXY_SERVER) {
-        originParam.args.push("--proxy-server=" + process.env.PROXY_SERVER)
-    }
+
     if (process.env.ENV === "docker") {
-        originParam.args = originParam.args.concat(['--no-sandbox', '--disable-gpu'])
-        originParam = Object.assign({ headless: true }, originParam)
-        if (enableCache) {
-            originParam = Object.assign({ userDataDir: '/tmp/puppeteer-cache' + cacheDirPostfix }, originParam)
-        }
-    } else {
-        originParam = Object.assign({ executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: false }, originParam)
-        if (enableCache) {
-            originParam = Object.assign({ userDataDir: './puppeteer-cache' + cacheDirPostfix }, originParam)
-        }
+        params.args = params.args.concat(['--no-sandbox', '--disable-gpu'])
+        params.headless = true
     }
-    return originParam
+
+    let defaultExepath = '/usr/bin/chromium-browser'
+    switch (os.platform()) {
+        case 'darwin':
+            defaultExepath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+            break
+        case 'win32':
+            defaultExepath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+            break
+    }
+    params.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || defaultExepath
+
+    if (process.env.PUPPETEER_CACHE_PATH) {
+        params.userDataDir = process.env.PUPPETEER_CACHE_PATH
+    }
+    return params
 }
 
 // refer issue: https://github.com/puppeteer/puppeteer/issues/5364
