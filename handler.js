@@ -48,7 +48,7 @@ const getRender = async () => {
 }
 
 const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
-    const browser = await puppeteer.launch(utils.getLaunchParam(true))
+    const browser = await puppeteer.launch(utils.getLaunchParam(proxy))
     const page = await browser.newPage()
     await page.evaluateOnNewDocument(async () => {
         const newProto = navigator.__proto__;
@@ -66,12 +66,12 @@ const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
         res.headers[key] = value
     }
 
-    function setCookie(cookieStr) {
-        if (typeof (cookieStr) === "string") {
-            res.cookies = Object.fromEntries(cookieStr.split(";").map(i => i.split("=")))
+    function setCookie(cookie) {
+        if (typeof (cookie) === "string") {
+            res.cookie = cookie
         } else {
-            // cookieStr is kv
-            res.cookies = cookieStr
+            res.cookie_kv = cookie
+            res.cookie = cookie.map(i => i.name + "=" + i.value).join(";")
         }
     }
 
@@ -84,6 +84,11 @@ const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
     }
 }
 
+const newFunction = (script) => {
+    const scriptHeader = ""
+    const scriptFooter = "\nreturn await injectFunc(__url__, __page__, __params__)"
+    return new AsyncFunction("__url__", "__page__", "__params__", scriptHeader + script + scriptFooter)
+}
 
 exports.getHandler = async () => {
     const render = await getRender()
@@ -99,12 +104,12 @@ exports.getHandler = async () => {
                 case "cookie":
                     let extraFunc = null
                     if (script) {
-                        extraFunc = new AsyncFunction("url", "page", script)
+                        extraFunc = newFunction(script)
                     }
                     injectFunc = getCookie(extraFunc, cmd)
             }
         } else {
-            injectFunc = new AsyncFunction("url", "page", "params", "const {addHeader, setCookie} = params;" + script)
+            injectFunc = newFunction(script)
         }
 
         ctx.body = proxy ? (await renderWithProxy(url, injectFunc, userAgent, proxy)) : (await render(url, injectFunc, userAgent))

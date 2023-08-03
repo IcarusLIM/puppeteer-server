@@ -32,20 +32,23 @@ async (url) => {
     res.cookies = cookieStr;
   }
 
-  const userDefindFunction = async (url, page, params) => {
-    const { addHeader, setCookie } = params;
-    // write your script here
-    // user defined script
+  const wrapperFunction = async (url, page, params) => {
+    // UDF script start
+    async function injectFunc(url, page, params) {
+      const { addHeader, setCookie } = params
+      // Do sth here ...
+      return {some_k: "some_v"}
+    }
+    // UDF script end
+    return await injectFunc(url, page, params)
   };
 
   return Object.assign(
     res,
-    await userDefindFunction(url, page, { addHeader, setCookie })
+    await wrapperFunction(url, page, { addHeader, setCookie })
   );
 };
 ```
-
-> 请勿在脚本中添加`function(url, page, { addHeader, setCookie }){`和`}`这样的方法首围字符串，仅编写函数体文本即可
 
 ## 接口及示例
 
@@ -91,51 +94,53 @@ async (url) => {
 以热云 http://39.104.98.139/#/ 登录为例，script 脚本：
 
 ```js
-const url = "http://39.104.98.139/#/",
-  userName = "xxx",
-  password = "xxx",
-  userNameInput = "div.infoBox > ul > li:nth-child(1) > input[type=text]", //用户名输入框的css selector
-  passwordInput = "div.infoBox > ul > li:nth-child(2) > input[type=password]", //密码输入框的css selector
-  loginBtn = "div.loginInfo > div.infoBox > div.login_btn", //登录按钮的css selector
-  successUrlPerfix = "http://39.104.98.139/adi/api/user/userMediaList";
+async function injectFunc(url, page, params) {
+  const url = "http://39.104.98.139/#/",
+    userName = "xxx",
+    password = "xxx",
+    userNameInput = "div.infoBox > ul > li:nth-child(1) > input[type=text]", //用户名输入框的css selector
+    passwordInput = "div.infoBox > ul > li:nth-child(2) > input[type=password]", //密码输入框的css selector
+    loginBtn = "div.loginInfo > div.infoBox > div.login_btn", //登录按钮的css selector
+    successUrlPerfix = "http://39.104.98.139/adi/api/user/userMediaList";
 
-// goto login page
-await page.goto(url);
+  // goto login page
+  await page.goto(url);
 
-// set username and password
-await page.evaluate(
-  async (userName, password, userNameInput, passwordInput, opDelay) => {
-    const sleep = (t) => new Promise((r) => setTimeout(r, t));
+  // set username and password
+  await page.evaluate(
+    async (userName, password, userNameInput, passwordInput, opDelay) => {
+      const sleep = (t) => new Promise((r) => setTimeout(r, t));
 
-    const elemUN = document.querySelector(userNameInput);
-    elemUN.value = userName;
-    elemUN.dispatchEvent(new Event("input"));
-    await sleep(opDelay);
+      const elemUN = document.querySelector(userNameInput);
+      elemUN.value = userName;
+      elemUN.dispatchEvent(new Event("input"));
+      await sleep(opDelay);
 
-    const elemPS = document.querySelector(passwordInput);
-    elemPS.value = password;
-    elemPS.dispatchEvent(new Event("input"));
-    await sleep(opDelay);
-  },
-  userName,
-  password,
-  userNameInput,
-  passwordInput,
-  opDelay
-);
-
-// do login
-const waitPromise = page.waitForResponse((resp) => {
-  const req = resp.request();
-  return (
-    decodeURI(req.url()).startsWith(successUrlPerfix) && resp.status() === 200
+      const elemPS = document.querySelector(passwordInput);
+      elemPS.value = password;
+      elemPS.dispatchEvent(new Event("input"));
+      await sleep(opDelay);
+    },
+    userName,
+    password,
+    userNameInput,
+    passwordInput,
+    opDelay
   );
-}, 10000);
-await page.click(loginBtn);
-const successResp = await waitPromise;
-const headers = successResp.request().headers();
 
-return { headers: { authorization: headers.authorization } };
+  // do login
+  const waitPromise = page.waitForResponse((resp) => {
+    const req = resp.request();
+    return (
+      decodeURI(req.url()).startsWith(successUrlPerfix) && resp.status() === 200
+    );
+  }, 10000);
+  await page.click(loginBtn);
+  const successResp = await waitPromise;
+  const headers = successResp.request().headers();
+
+  return { headers: { authorization: headers.authorization } };
+}
 ```
 
 将返回

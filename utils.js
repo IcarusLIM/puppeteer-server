@@ -4,10 +4,12 @@ exports.sleep = timeout => {
     return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
-exports.getLaunchParam = (enableProxy = false) => {
+exports.getLaunchParam = (dynamicProxy = null) => {
     const params = { args: [] }
 
-    if (enableProxy && process.env.PROXY_SERVER) {
+    if (dynamicProxy) {
+        params.args.push("--proxy-server=" + dynamicProxy)
+    } else if (process.env.PROXY_SERVER) {
         params.args.push("--proxy-server=" + process.env.PROXY_SERVER)
     }
 
