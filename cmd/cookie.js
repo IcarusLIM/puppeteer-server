@@ -18,7 +18,7 @@ exports.cookie = (extraFunc, cmd) => {
 
         const res = {}
         if (extraFunc) {
-            res.extra = await extraFunc(url, page)
+            res.extra = await extraFunc(url, page, params)
         }
 
         const cdpResp = await (allCookies ? cdpSession.send("Network.getAllCookies") : cdpSession.send("Network.getCookies", { urls: [url] }))

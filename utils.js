@@ -4,16 +4,20 @@ exports.sleep = timeout => {
     return new Promise(resolve => setTimeout(resolve, timeout))
 }
 
-exports.getLaunchParam = (enableProxy = false) => {
+exports.getLaunchParam = (dynamicProxy = null) => {
     const params = { args: [] }
 
-    if (enableProxy && process.env.PROXY_SERVER) {
+    if (dynamicProxy) {
+        params.args.push("--proxy-server=" + dynamicProxy)
+    } else if (process.env.PROXY_SERVER) {
         params.args.push("--proxy-server=" + process.env.PROXY_SERVER)
     }
 
     if (process.env.ENV === "docker") {
         params.args = params.args.concat(['--no-sandbox', '--disable-gpu'])
         params.headless = true
+    } else {
+        params.headless = false
     }
 
     let defaultExepath = '/usr/bin/chromium-browser'

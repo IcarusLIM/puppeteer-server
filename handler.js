@@ -8,7 +8,7 @@ const { cookie: getCookie } = require('./cmd/cookie')
 
 const getRender = async () => {
     const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam()))
-    return async (url, injectFunc, userAgent) => {
+    return async (url, wrapperFunc, userAgent) => {
         const ctx = await browser.createIncognitoBrowserContext()
         const page = await ctx.newPage()
         // hide spider 
@@ -38,7 +38,7 @@ const getRender = async () => {
         }
 
         try {
-            const funcRet = (await injectFunc(url, page, { addHeader, setCookie })) || {}
+            const funcRet = (await wrapperFunc(url, page, { addHeader, setCookie })) || {}
             return Object.assign(res, funcRet)
         } finally {
             await page.close()
@@ -47,8 +47,8 @@ const getRender = async () => {
     }
 }
 
-const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
-    const browser = await puppeteer.launch(utils.getLaunchParam(true))
+const renderWithProxy = async (url, wrapperFunc, userAgent, proxy) => {
+    const browser = await puppeteer.launch(utils.getLaunchParam(proxy))
     const page = await browser.newPage()
     await page.evaluateOnNewDocument(async () => {
         const newProto = navigator.__proto__;
@@ -66,17 +66,17 @@ const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
         res.headers[key] = value
     }
 
-    function setCookie(cookieStr) {
-        if (typeof (cookieStr) === "string") {
-            res.cookies = Object.fromEntries(cookieStr.split(";").map(i => i.split("=")))
+    function setCookie(cookie) {
+        if (typeof (cookie) === "string") {
+            res.cookie = cookie
         } else {
-            // cookieStr is kv
-            res.cookies = cookieStr
+            res.cookie_kv = cookie
+            res.cookie = cookie.map(i => i.name + "=" + i.value).join(";")
         }
     }
 
     try {
-        const funcRet = (await injectFunc(url, page, { addHeader, setCookie })) || {}
+        const funcRet = (await wrapperFunc(url, page, { addHeader, setCookie })) || {}
         return Object.assign(res, funcRet)
     } finally {
         await page.close()
@@ -84,29 +84,34 @@ const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
     }
 }
 
+const newFunction = (script) => {
+    const scriptHeader = ""
+    const scriptFooter = "\nreturn await injectFunc(__url__, __page__, __params__)"
+    return new AsyncFunction("__url__", "__page__", "__params__", scriptHeader + script + scriptFooter)
+}
 
 exports.getHandler = async () => {
     const render = await getRender()
 
     return async (ctx) => {
         const { url, script, cmd, proxy, userAgent } = ctx.request.body
-        let injectFunc
+        let wrapperFunc
         if (cmd) {
             switch (cmd.type) {
                 case "login":
-                    injectFunc = login(cmd)
+                    wrapperFunc = login(cmd)
                     break
                 case "cookie":
                     let extraFunc = null
                     if (script) {
-                        extraFunc = new AsyncFunction("url", "page", script)
+                        extraFunc = newFunction(script)
                     }
-                    injectFunc = getCookie(extraFunc, cmd)
+                    wrapperFunc = getCookie(extraFunc, cmd)
             }
         } else {
-            injectFunc = new AsyncFunction("url", "page", "params", "const {addHeader, setCookie} = params;" + script)
+            wrapperFunc = newFunction(script)
         }
 
-        ctx.body = proxy ? (await renderWithProxy(url, injectFunc, userAgent, proxy)) : (await render(url, injectFunc, userAgent))
+        ctx.body = proxy ? (await renderWithProxy(url, wrapperFunc, userAgent, proxy)) : (await render(url, wrapperFunc, userAgent))
     }
 };
