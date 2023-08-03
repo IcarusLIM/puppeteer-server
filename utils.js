@@ -16,6 +16,8 @@ exports.getLaunchParam = (dynamicProxy = null) => {
     if (process.env.ENV === "docker") {
         params.args = params.args.concat(['--no-sandbox', '--disable-gpu'])
         params.headless = true
+    } else {
+        params.headless = false
     }
 
     let defaultExepath = '/usr/bin/chromium-browser'

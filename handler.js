@@ -8,7 +8,7 @@ const { cookie: getCookie } = require('./cmd/cookie')
 
 const getRender = async () => {
     const browser = await puppeteer.launch(Object.assign(utils.getLaunchParam()))
-    return async (url, injectFunc, userAgent) => {
+    return async (url, wrapperFunc, userAgent) => {
         const ctx = await browser.createIncognitoBrowserContext()
         const page = await ctx.newPage()
         // hide spider 
@@ -38,7 +38,7 @@ const getRender = async () => {
         }
 
         try {
-            const funcRet = (await injectFunc(url, page, { addHeader, setCookie })) || {}
+            const funcRet = (await wrapperFunc(url, page, { addHeader, setCookie })) || {}
             return Object.assign(res, funcRet)
         } finally {
             await page.close()
@@ -47,7 +47,7 @@ const getRender = async () => {
     }
 }
 
-const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
+const renderWithProxy = async (url, wrapperFunc, userAgent, proxy) => {
     const browser = await puppeteer.launch(utils.getLaunchParam(proxy))
     const page = await browser.newPage()
     await page.evaluateOnNewDocument(async () => {
@@ -76,7 +76,7 @@ const renderWithProxy = async (url, injectFunc, userAgent, proxy) => {
     }
 
     try {
-        const funcRet = (await injectFunc(url, page, { addHeader, setCookie })) || {}
+        const funcRet = (await wrapperFunc(url, page, { addHeader, setCookie })) || {}
         return Object.assign(res, funcRet)
     } finally {
         await page.close()
@@ -95,23 +95,23 @@ exports.getHandler = async () => {
 
     return async (ctx) => {
         const { url, script, cmd, proxy, userAgent } = ctx.request.body
-        let injectFunc
+        let wrapperFunc
         if (cmd) {
             switch (cmd.type) {
                 case "login":
-                    injectFunc = login(cmd)
+                    wrapperFunc = login(cmd)
                     break
                 case "cookie":
                     let extraFunc = null
                     if (script) {
                         extraFunc = newFunction(script)
                     }
-                    injectFunc = getCookie(extraFunc, cmd)
+                    wrapperFunc = getCookie(extraFunc, cmd)
             }
         } else {
-            injectFunc = newFunction(script)
+            wrapperFunc = newFunction(script)
         }
 
-        ctx.body = proxy ? (await renderWithProxy(url, injectFunc, userAgent, proxy)) : (await render(url, injectFunc, userAgent))
+        ctx.body = proxy ? (await renderWithProxy(url, wrapperFunc, userAgent, proxy)) : (await render(url, wrapperFunc, userAgent))
     }
 };
