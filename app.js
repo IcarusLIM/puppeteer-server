@@ -12,7 +12,7 @@ const serve = async () => {
     router.post('/exec', await getHandler())
 
     app.use(errorHandler).use(reqLog).use(bodyParser()).use(router.routes())
-    app.listen(8081)
+    app.listen(8080)
 }
 
 serve()
