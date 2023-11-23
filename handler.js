@@ -9,7 +9,7 @@ const { cookie: getCookie } = require('./cmd/cookie')
 const { downloadPage } = require('./cmd/download')
 
 const browserCache = new LRUCache({
-    max: 1,
+    max: 5,
     disposeAfter: async (browser, key) => {
         console.log("try close browser: " + key)
         const closeIfNoActive = async () => {
@@ -74,7 +74,7 @@ const getRender = (browser) => {
             return Object.assign(res, funcRet)
         } finally {
             await page.close()
-            await ctx.close()
+            // await ctx.close()
         }
     }
 }
