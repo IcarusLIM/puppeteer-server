@@ -34,6 +34,7 @@ exports.getLaunchParam = (dynamicProxy = null) => {
     if (process.env.PUPPETEER_CACHE_PATH) {
         params.userDataDir = process.env.PUPPETEER_CACHE_PATH
     }
+    console.log("puppeteer launch params: " + JSON.stringify(params))
     return params
 }
 
